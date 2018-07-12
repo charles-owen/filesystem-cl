@@ -3,7 +3,7 @@
  * File system console components
  */
 
-
+import FileSystemComponent from './FileSystemComponent.vue';
 
 let FileSystemConsole = function() {
 
@@ -16,18 +16,18 @@ Console.tables.add({
     api: '/api/filesystem/tables'
 });
 
-// Console.components.addOption({
-//     atLeast: Users.User.STAFF,
-//     page: {title: 'Main', route: '', order: 1},
-//     section: {title: 'Site', order: 1},
-//     title: 'Users',
-//     order: 1,
-//     route: '/users',
-//     routes: [
-//         {route: '/users', component: UsersEditorComponent, props: {management: false}}
-//     ]
-// });
-//
+Console.components.addOption({
+    atLeast: Users.User.STAFF,
+    page: {title: 'Main', route: '', order: 1},
+    section: {title: 'Site', order: 1},
+    title: 'File System',
+    order: 10,
+    route: '/filesystem',
+    routes: [
+        {route: '/filesystem', component: FileSystemComponent}
+    ]
+});
+
 //
 // Console.components.addOption({
 //     atLeast: Users.User.ADMIN,

@@ -20,9 +20,19 @@ class FileSystemPlugin extends \CL\Site\Components\Plugin {
 			return $this->postStartup($site, $server, $time);
 		});
 
-		$site->addApi('filesystem', function(Site $site, Server $server, array $params, $time) {
+		$site->addRoute(['filesystem', 'download', ':id'], function(Site $site, Server $server, array $params, array $properties, $time) {
+			$view = new FileDownload($site, $server, $properties);
+			return $view->whole();
+		});
+
+		$site->addRoute(['filesystem', 'view', ':id'], function(Site $site, Server $server, array $params, array $properties, $time) {
+			$view = new FileView($site, $properties);
+			return $view->whole();
+		});
+
+		$site->addRoute(['api', 'filesystem', '*'], function(Site $site, Server $server, array $params, array $properties, $time) {
 			$resource = new ApiFileSystem();
-			return $resource->dispatch($site, $server, $params, $time);
+			return $resource->apiDispatch($site, $server, $params, $properties, $time);
 		});
 	}
 

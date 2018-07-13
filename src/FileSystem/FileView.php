@@ -9,11 +9,22 @@ namespace CL\FileSystem;
 use CL\Site\Site;
 use CL\Site\View;
 
+/**
+ * View class for viewing the content of files.
+ */
 class FileView extends View {
-	public function __construct(Site $site, $vars) {
+	/**
+	 * FileView constructor.
+	 * @param Site $site The Site configuration
+	 * @param array $properties Properties passed from the router.
+	 */
+	public function __construct(Site $site, $properties) {
 		parent::__construct($site);
 
-		$id = $vars['id'];
+		// Paths to the view are of the form:
+		// cl/filesystem/view/22
+		// where 22 is an id for a file to view.
+		$id = $properties['id'];
 
 		$fs = new FileSystem($site->db);
 		$files = $fs->query(['id'=>$id]);
@@ -26,6 +37,10 @@ class FileView extends View {
 		}
 	}
 
+	/**
+	 * Present the page content
+	 * @return string HTML
+	 */
 	public function present() {
 		$user = $this->file['user'];
 		$userName = $this->file['username'];

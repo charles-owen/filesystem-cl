@@ -2,19 +2,18 @@
 
 namespace CL\FileSystem;
 
-use CL\Site\Api;
 use CL\Site\Site;
 use CL\Site\System\Server;
 use CL\Site\Api\JsonAPI;
 use CL\Site\Api\APIException;
-use CL\Users\Api\ApiResource;
+use CL\Users\Api\Resource;
 use CL\Users\User;
 use CL\Users\Users;
 
 /**
  * API Resource for /api/users
  */
-class ApiFileSystem extends \CL\Users\Api\ApiResource {
+class ApiFileSystem extends \CL\Users\Api\Resource {
 	const QUERY_LIMIT = 500;
 
 
@@ -23,7 +22,8 @@ class ApiFileSystem extends \CL\Users\Api\ApiResource {
 		parent::__construct();
 	}
 
-	public function dispatch(Site $site, Server $server, array $params, $time) {
+	public function dispatch(Site $site, Server $server, array $params, array $properties, $time) {
+
 		$user = $this->isUser($site);
 
 		if(count($params) === 0) {
@@ -115,11 +115,11 @@ class ApiFileSystem extends \CL\Users\Api\ApiResource {
 		}
 
 		$this->ensure($post, ['appTag', 'name', 'data']);
-		$appTag = ApiResource::sanitize($post['appTag']);
-		$name = ApiResource::sanitize($post['name']);
-		$type = ApiResource::sanitize($post['type']);
+		$appTag = Resource::sanitize($post['appTag']);
+		$name = Resource::sanitize($post['name']);
+		$type = Resource::sanitize($post['type']);
 		if(isset($post['permission'])) {
-			$permission = ApiResource::sanitize($post['permission']);
+			$permission = Resource::sanitize($post['permission']);
 		} else {
 			$permission = FileSystem::PERMISSION_PRIVATE;
 		}
@@ -174,8 +174,8 @@ class ApiFileSystem extends \CL\Users\Api\ApiResource {
 		}
 
 		$this->ensure($post, ['appTag', 'name']);
-		$appTag = ApiResource::sanitize($post['appTag']);
-		$name = ApiResource::sanitize($post['name']);
+		$appTag = Resource::sanitize($post['appTag']);
+		$name = Resource::sanitize($post['name']);
 
 		$fs = new FileSystem($site->db);
 		$ret = $fs->readText($fileUser->id, $appTag, $name);

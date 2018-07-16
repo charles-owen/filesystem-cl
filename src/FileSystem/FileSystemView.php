@@ -24,7 +24,7 @@ class FileSystemView extends View {
 
 		$router = new Router($site, $server);
 		$router->add('view/:id', function($vars) use($site) {
-			return new FileView($site, $vars);
+			return new ErrorView($site, $vars);
 		});
 
 		$router->add('download/:id', function($vars) use($site, $server) {

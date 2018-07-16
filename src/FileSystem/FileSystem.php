@@ -132,8 +132,8 @@ SQL;
                 'type' => $row['type'],
                 'created' => $created,
                 'modified' => $modified,
-                'createdStr' => date("h:i:sa n-d-Y", $created),
-                'modifiedStr' => date("h:i:sa n-d-Y", $modified),
+                'createdStr' => date("n-d-Y h:i:sa", $created),
+                'modifiedStr' => date("n-d-Y h:i:sa", $modified),
 	            'permission' => $row['permission']];
 		}
 

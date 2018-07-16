@@ -7,27 +7,28 @@
       </select></label></p>
       <p><label><span>User: </span><user-selector :selected="selected"></user-selector></label></p>
       <p class="center"><button :disabled="user === null" @click.prevent="query()">Query</button></p>
-    </div>
 
-    <table class="small" v-if="results.length > 0">
-      <tr>
-        <th>User</th>
-        <th>Name</th>
-        <th>File</th>
-        <th>Created</th>
-        <th>Modified</th>
-      </tr>
-      <tr v-for="result in results">
-        <td>{{result.user}}</td>
-        <td>{{result.username}}</td>
-        <td><a :href="toView + '/' + result.id" target="_file">{{result.name}}</a>
-        <a :href="toDownload + '/' + result.id"><img :src="toDownloadImg"></a></td>
-        <td>{{result.createdStr}}</td>
-        <td>{{result.modifiedStr}}</td>
-      </tr>
-    </table>
+      <div v-if="fetched">
+        <table class="small" v-if="results.length > 0">
+          <tr>
+            <th>User</th>
+            <th>Name</th>
+            <th>File</th>
+            <th>Created</th>
+            <th>Modified</th>
+          </tr>
+          <tr v-for="result in results">
+            <td>{{result.user}}</td>
+            <td>{{result.username}}</td>
+            <td><a :href="toView + '/' + result.id" target="_file">{{result.name}}</a>
+            <a :href="toDownload + '/' + result.id"><img :src="toDownloadImg"></a></td>
+            <td>{{result.createdStr}}</td>
+            <td>{{result.modifiedStr}}</td>
+          </tr>
+        </table>
+        <p v-if="results.length === 0" class="centerbox secondb center">No files...</p>
+      </div>
 
-    <div class="full">
       <p class="centerbox primary">CourseLib includes a simple file system that is
         mainly provided to allow quizzes or other assignments to be persistent in the
         system and to provide a way for applications such as Cirsim to save and
@@ -39,7 +40,6 @@
 </template>
 
 <script>
-    import Dialog from 'dialog-cl';
     import {UserSelectorVue} from 'users-cl';
 
     export default {
@@ -49,6 +49,7 @@
                 user: null,
                 applications: [],
 
+                fetched: false,
                 results: [],
 
                 toView: Site.root + 'cl/filesystem/view',
@@ -95,6 +96,8 @@
                     return;
                 }
 
+                this.fetched = false;
+
                 let params = {
                       'userId': this.user.id
                 };
@@ -106,7 +109,7 @@
                 Site.api.get('/api/filesystem', params)
                     .then((response) => {
                         if(!response.hasError()) {
-                            console.log(response);
+                            this.fetched = true;
                             let data = response.getData('files');
                             if(data !== null) {
                                 this.results = data.attributes;
@@ -120,7 +123,7 @@
                         console.log(error);
                         Site.toast(this, error);
                     });
-    }
+            }
         }
     }
 </script>

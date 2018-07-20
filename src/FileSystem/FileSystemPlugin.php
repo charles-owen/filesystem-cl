@@ -11,6 +11,19 @@ use CL\Site\System\Server;
 use CL\Users\Api\ApiUsers;
 
 class FileSystemPlugin extends \CL\Site\Components\Plugin {
+	/**
+	 * A tag that represents this plugin
+	 * @return string A tag like 'course', 'users', etc.
+	 */
+	public function tag() {return 'filesystem';}
+
+	/**
+	 * Return an array of tags indicating what plugins this one is dependent on.
+	 * @return array of tags this plugin is dependent on
+	 */
+	public function depends() {return ['console', 'users'];}
+
+
 	public function install(Site $site) {
 		$site->addPreStartup(function(Site $site, Server $server, $time) {
 			return $this->preStartup($site, $server, $time);

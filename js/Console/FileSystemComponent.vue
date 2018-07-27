@@ -40,7 +40,7 @@
 </template>
 
 <script>
-    import {UserSelectorVue} from 'users-cl';
+  const UserSelectorVue = Users.UserSelectorVue;
 
     export default {
         data: function() {
@@ -52,15 +52,15 @@
                 fetched: false,
                 results: [],
 
-                toView: Site.root + 'cl/filesystem/view',
-                toDownload: Site.root + 'cl/filesystem/download',
-                toDownloadImg: Site.root + 'vendor/cl/site/img/download.png'
+                toView: Site.root + '/cl/filesystem/view',
+                toDownload: Site.root + '/cl/filesystem/download',
+                toDownloadImg: Site.root + '/vendor/cl/site/img/download.png'
 
             }
         },
 
         mounted() {
-            this.$parent.setTitle(Console.title + ': File System');
+            this.$parent.setTitle(': File System');
 
             Site.api.get('/api/filesystem/applications', {})
                 .then((response) => {

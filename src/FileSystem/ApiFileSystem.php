@@ -23,7 +23,6 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	}
 
 	public function dispatch(Site $site, Server $server, array $params, array $properties, $time) {
-
 		$user = $this->isUser($site);
 
 		if(count($params) === 0) {

@@ -9,6 +9,7 @@ namespace CL\FileSystem;
 use CL\Site\Site;
 use CL\Site\System\Server;
 use CL\Users\Api\ApiUsers;
+use CL\Site\Router;
 
 class FileSystemPlugin extends \CL\Site\Plugin {
 	/**

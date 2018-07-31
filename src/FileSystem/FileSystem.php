@@ -14,7 +14,10 @@ use CL\Tables\TableWhere;
  * Class for the File System tables
  */
 class FileSystem extends \CL\Tables\Table {
+	/// File permission is public
 	const PERMISSION_PUBLIC = 'P';
+
+	/// File permission is private
 	const PERMISSION_PRIVATE = 'X';
 
 	/**
@@ -25,7 +28,10 @@ class FileSystem extends \CL\Tables\Table {
 		parent::__construct($config, "filesystem");
 	}
 
-	/** Function to create an SQL create table command for the users table */
+	/**
+	 * Function to create an SQL create table command for the users table
+	 * @return string SQL
+	 */
 	public function createSQL() {
 
 		$query = <<<SQL
@@ -51,10 +57,10 @@ SQL;
 	}
 
 	/**
-	 * @param User $user User to search
-	 * @param string $assignTag Assignment
-	 * @param $tag Tag
-	 * @param $name File name
+	 * @param int $userId Internal id for user to search
+	 * @param string $appTag Tag An application tag for this file
+	 * @param string $name File name within the application scope
+	 * @return true if successfully deleted
 	 */
 	public function delete($userId, $appTag, $name) {
 		$sql = <<<SQL
@@ -143,6 +149,7 @@ SQL;
 
     /**
      * Get all indicated application tags
+     * @return Array of tags
      */
     public function queryAppTags() {
 	    $sql = <<<SQL
@@ -248,14 +255,13 @@ SQL;
 
 	/**
 	 * Update the text in a record.
-	 * @param \User $user
-	 * @param $assignTag
-	 * @param $tag
+	 * @param $userId
+	 * @param $appTag
 	 * @param $name
 	 * @param $data
 	 * @param $type
 	 * @param string $permission File permission
-	 * @param int $time
+	 * @param $time
 	 * @return bool
 	 */
 	public function updateText($userId, $appTag, $name, $data, $type, $permission, $time) {
@@ -291,6 +297,13 @@ SQL;
 		return $stmt->rowCount() > 0;
 	}
 
+	/**
+	 * Read text from a file.
+	 * @param int $userId User that owns/created the file
+	 * @param string $appTag Application tag
+	 * @param string $name Filename
+	 * @return array with keys 'id', 'data', 'type', 'created', 'modified', and 'permission'
+	 */
 	public function readText($userId, $appTag, $name) {
 		$pdo = $this->pdo;
 
@@ -331,6 +344,11 @@ SQL;
 		}
 	}
 
+	/**
+	 * Read text from a file.
+	 * @param int $id ID for the file
+	 * @return array with keys 'id', 'data', 'type', 'created', 'modified', and 'permission'
+	 */
 	public function readTextId($id) {
 		$pdo = $this->pdo;
 		$where = new \CL\Tables\TableWhere($this);
@@ -386,8 +404,9 @@ SQL;
 	 * @param int $userId
 	 * @param string $appTag
 	 * @param string $name
-	 * @param string $data
+	 * @param handle $file
 	 * @param string $type
+	 * @param string $permission File permission to set
 	 * @param int $time
 	 * @return int ID for the new entry or false if fail
 	 */
@@ -430,7 +449,11 @@ SQL;
 		return $pdo->lastInsertId();
 	}
 
-
+	/**
+	 * Read a file based on an ID
+	 * @param int $id ID for the file
+	 * @return array with keys 'id', 'binary', 'type', 'created', 'modified', and 'permission'
+	 */
 	public function readFileId($id) {
 		$pdo = $this->pdo;
 		$where = new \CL\Tables\TableWhere($this);

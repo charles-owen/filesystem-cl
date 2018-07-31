@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * API Resource for /api/filesystem
+ */
 namespace CL\FileSystem;
 
 use CL\Site\Site;
@@ -11,17 +14,29 @@ use CL\Users\User;
 use CL\Users\Users;
 
 /**
- * API Resource for /api/users
+ * API Resource for /api/filesystem
  */
 class ApiFileSystem extends \CL\Users\Api\Resource {
+	/// Default query limit for file queries
 	const QUERY_LIMIT = 500;
 
-
-
+	/**
+	 * ApiFileSystem constructor.
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 
+	/**
+	 * Dispatch to this component from the router.
+	 * @param Site $site The Site configuration object
+	 * @param Server $server The Server object
+	 * @param array $params Parameters after the path
+	 * @param array $properties Properties from the path, should be empty
+	 * @param int $time Time stamp
+	 * @return JsonAPI Result
+	 * @throws APIException On error
+	 */
 	public function dispatch(Site $site, Server $server, array $params, array $properties, $time) {
 		$user = $this->isUser($site);
 
@@ -49,7 +64,7 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		throw new APIException("Invalid API Path", APIException::INVALID_API_PATH);
 	}
 
-	public function query(Site $site, User $user, Server $server) {
+	private function query(Site $site, User $user, Server $server) {
 		$this->atLeast($user, User::STAFF);
 
 		$params = [];
@@ -97,7 +112,7 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	 * @return JsonAPI
 	 * @throws APIException If unable to write file
 	 */
-	public function save(Site $site, User $user, Server $server, array $params, $time) {
+	private function save(Site $site, User $user, Server $server, array $params, $time) {
 		$post = $server->post;
 
 		if(isset($post['userId'])) {
@@ -156,7 +171,7 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	 * @return JsonAPI
 	 * @throws APIException If unable to write file
 	 */
-	public function load(Site $site, User $user, Server $server, array $params, $time) {
+	private function load(Site $site, User $user, Server $server, array $params, $time) {
 		$post = $server->post;
 
 		if(isset($post['userId'])) {
@@ -196,7 +211,7 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	 * @return JsonAPI
 	 * @throws APIException If unable to write file
 	 */
-	public function applications(Site $site, User $user, Server $server) {
+	private function applications(Site $site, User $user, Server $server) {
 		$this->atLeast($user, User::STAFF);
 
 		$fs = new FileSystem($site->db);
@@ -207,7 +222,7 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		return $json;
 	}
 
-	public function upload(Site $site, User $user, Server $server, array $params, $time) {
+	private function upload(Site $site, User $user, Server $server, array $params, $time) {
 		$file = $server->files["upload"];
 		$type = $file['type'];
 

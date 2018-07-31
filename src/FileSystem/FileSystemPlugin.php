@@ -1,16 +1,20 @@
 <?php
 /**
  * @file
- * Plugin for add users support to Site.
+ * Plugin that adds support for a basic file system to the site.
  */
 
+/// Classes in the FileSystem subsystem
 namespace CL\FileSystem;
 
 use CL\Site\Site;
 use CL\Site\System\Server;
-use CL\Users\Api\ApiUsers;
+use CL\Console\ConsoleView;
 use CL\Site\Router;
 
+/**
+ * Plugin that adds support for a basic file system to the site.
+ */
 class FileSystemPlugin extends \CL\Site\Plugin {
 	/**
 	 * A tag that represents this plugin
@@ -23,16 +27,6 @@ class FileSystemPlugin extends \CL\Site\Plugin {
 	 * @return array of tags this plugin is dependent on
 	 */
 	public function depends() {return ['console', 'users'];}
-
-
-	public function install(Site $site) {
-		$this->site = $site;
-
-		$site->addPostStartup(function(Site $site, Server $server, $time) {
-			return $this->postStartup($site, $server, $time);
-		});
-	}
-
 
 	/**
 	 * Amend existing object
@@ -57,25 +51,11 @@ class FileSystemPlugin extends \CL\Site\Plugin {
 				$resource = new ApiFileSystem();
 				return $resource->apiDispatch($site, $server, $params, $properties, $time);
 			});
+		} else if($object instanceof ConsoleView) {
+			$object->addJS('filesystemconsole');
 		}
 	}
 
-
-	/**
-	 * System is started, perform any validation required
-	 * @param Site $site
-	 * @param Server $server
-	 * @param int $time Current time
-	 * @return null|string redirect page.
-	 */
-	private function postStartup(Site $site, Server $server, $time) {
-		//
-		// Install in the control panel
-		//
-		$site->console->addPlugin('filesystemconsole', []);
-
-		return null;
-	}
 
 	/**
 	 * Ensure tables exist for a given subsystem.
@@ -86,5 +66,4 @@ class FileSystemPlugin extends \CL\Site\Plugin {
 		$maker->create(false);
 	}
 
-	private $site = null;
 }

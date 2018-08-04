@@ -226,8 +226,6 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		$file = $server->files["upload"];
 		$type = $file['type'];
 
-		print_r($file);
-		echo $type;
 		if ($file["error"] > 0 || $file["tmp_name"] == "") {
 			// Error return
 			$json = new JsonAPI();

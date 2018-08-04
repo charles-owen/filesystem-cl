@@ -40,7 +40,7 @@
 </template>
 
 <script>
-  const UserSelectorVue = Users.UserSelectorVue;
+  import UserSelectorVue from 'users-cl/js/Lib/UserSelectorVue.vue';
 
     export default {
         data: function() {

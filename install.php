@@ -4,4 +4,4 @@
  * Used by the site installer
  */
 
-return new CL\Site\Install\Package('\CL\FileSystem/FileSystemPlugin', '/cldist');
+return new CL\Site\Install\Package('\CL\FileSystem\FileSystemPlugin', '/cldist');

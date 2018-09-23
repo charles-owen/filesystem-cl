@@ -14,11 +14,21 @@
       "CL\\FileSystem\\": "src/FileSystem"
     }
   },
+  "require": {
+    "cl/site": "^2.0",
+    "cl/users": "^2.0",
+    "cl/console": "^2.0"
+  },
   "repositories": [
     {
       "type": "vcs",
       "url": "https://github.com/charles-owen/filesystem-cl.git"
     }
-  ]
+  ],
+  "extra": {
+    "branch-alias": {
+      "dev-master": "2.0.x-dev"
+    }
+  }
 }
 

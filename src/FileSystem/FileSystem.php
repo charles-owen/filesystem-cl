@@ -503,4 +503,36 @@ SQL;
 		}
 	}
 
+	/**
+	 * Table cleaning. Removes expired autologin records and any orphaned autologin
+	 * returns (no current user).
+	 * @return string Text result of cleaning of null if not implemented.
+	 */
+	public function clean($time=null) {
+		$users = new \CL\Users\Users($this->config);
+		$result = '';
+
+		$sql = <<<SQL
+delete from $this->tablename
+where userid not in (
+	select id
+	from $users->tablename
+)
+SQL;
+
+		$stmt = $this->pdo->prepare($sql);
+		if($stmt->execute([]) === false) {
+			return "Error accessing autologin table\n";
+		}
+
+		$cnt = $stmt->rowCount();
+		if($cnt > 0) {
+			$result .= "Removed $cnt orphaned file system records\n";
+		} else {
+			$result .= "No orphaned file system records\n";
+		}
+
+		return $result;
+	}
+
 }

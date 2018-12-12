@@ -5,7 +5,9 @@
 
 import FileSystemComponent from './FileSystemComponent.vue';
 
-export let FileSystemConsole = function(site, Console) {
+export let FileSystemConsole = function(site) {
+    const Console = site.console;
+
     Console.tables.add({
         title: 'FileSystem',
         order: 5,

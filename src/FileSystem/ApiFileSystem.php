@@ -127,7 +127,6 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 			$this->atLeast($user, User::USER);
 			$fileUser = $user;
 		}
-
 		$this->ensure($post, ['appTag', 'name', 'data']);
 		$appTag = Resource::sanitize($post['appTag']);
 		$name = Resource::sanitize($post['name']);
@@ -136,6 +135,20 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 			$permission = Resource::sanitize($post['permission']);
 		} else {
 			$permission = FileSystem::PERMISSION_PRIVATE;
+		}
+
+		if(!$user->staff && $site->installed('course')) {
+			// When the course system is installed, we check to see if
+			// the $appTag is an application tag. If so, we ensure we
+			// do not write that tag if the assignment is not open
+			$course = $site->course;
+			$section = $course->get_section_for($user);
+			if($section !== null) {
+				$assignment = $section->get_assignment($appTag);
+				if($assignment !== null && !$assignment->is_open($user, $time)) {
+					throw new APIException('Assignment is not open for submission');
+				}
+			}
 		}
 
 		// Notice: data is not sanitized and may include tags...
@@ -244,6 +257,20 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		$ext = end($sepext);       // gets extension
 		$appTag = trim(strip_tags($server->post['appTag']));
 		$path = $file["tmp_name"];
+
+		if(!$user->staff && $site->installed('course')) {
+			// When the course system is installed, we check to see if
+			// the $appTag is an application tag. If so, we ensure we
+			// do not write that tag if the assignment is not open
+			$course = $site->course;
+			$section = $course->get_section_for($user);
+			if($section !== null) {
+				$assignment = $section->get_assignment($appTag);
+				if($assignment !== null && !$assignment->is_open($user, $time)) {
+					throw new APIException('Assignment is not open for submission');
+				}
+			}
+		}
 
 		$fs = new FileSystem($site->db);
 		$fs->writeFile($user->id, $appTag, $name, $path,

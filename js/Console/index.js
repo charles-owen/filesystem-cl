@@ -5,4 +5,4 @@
 
 import {FileSystemConsole} from './FileSystemConsole';
 
-new FileSystemConsole(Site.Site, Site.Console);
+new FileSystemConsole(Site.Site, Site.Site.console);

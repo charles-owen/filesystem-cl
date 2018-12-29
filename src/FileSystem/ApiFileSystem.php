@@ -16,7 +16,7 @@ use CL\Users\Users;
 /**
  * API Resource for /api/filesystem
  */
-class ApiFileSystem extends \CL\Users\Api\Resource {
+class ApiFileSystem extends Resource {
 	/// Default query limit for file queries
 	const QUERY_LIMIT = 500;
 
@@ -64,6 +64,17 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		throw new APIException("Invalid API Path", APIException::INVALID_API_PATH);
 	}
 
+	/**
+	 * Basic query of the file system
+	 * /cl/api/filesystem
+	 *
+	 * Only available to staff!
+	 * @param Site $site Site object
+	 * @param User $user User object
+	 * @param Server $server Server object
+	 * @return JsonAPI
+	 * @throws APIException
+	 */
 	private function query(Site $site, User $user, Server $server) {
 		$this->atLeast($user, User::STAFF);
 
@@ -72,6 +83,10 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 
 		if(!empty($get['userId'])) {
 			$params['userId'] = $get['userId'];
+		}
+
+		if(!empty($get['memberId'])) {
+			$params['memberId'] = $get['memberId'];
 		}
 
 		if(!empty($get['limit'])) {
@@ -86,6 +101,10 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 			$params['appTag'] = $get['appTag'];
 		}
 
+		if(!empty($get['name'])) {
+			$params['name'] = $get['name'];
+		}
+
 		$fs = new FileSystem($site->db);
 		$result = $fs->query($params);
 
@@ -96,6 +115,8 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 
 	/**
 	 * Save a file. Creates file is does not exist, or replaces any existing file.
+	 *
+	 * /cl/api/filesystem/save
 	 *
 	 * _POST['appTag']
 	 * _POST['name']
@@ -115,18 +136,8 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	private function save(Site $site, User $user, Server $server, array $params, $time) {
 		$post = $server->post;
 
-		if(isset($post['userId'])) {
-			$this->atLeast($user, User::ADMIN);
+		$fileUser = $this->getFileUser($site, $user, $post);
 
-			$users = new Users($site->db);
-			$fileUser = $users->get($post['userId']);
-			if($fileUser === null) {
-				throw new APIException('User does not exist');
-			}
-		} else {
-			$this->atLeast($user, User::USER);
-			$fileUser = $user;
-		}
 		$this->ensure($post, ['appTag', 'name', 'data']);
 		$appTag = Resource::sanitize($post['appTag']);
 		$name = Resource::sanitize($post['name']);
@@ -154,11 +165,13 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		// Notice: data is not sanitized and may include tags...
 		$data = $post['data'];
 
+		$memberId = $fileUser->member !== null ? $fileUser->member->id : 0;
+
 		$fs = new FileSystem($site->db);
-		if(!$fs->fileExists($user->id, $appTag, $name)) {
-			$ret = $fs->writeText($fileUser->id, $appTag, $name, $data, $type, $permission, $time);
+		if(!$fs->fileExists($user->id, $memberId, $appTag, $name)) {
+			$ret = $fs->writeText($fileUser->id, $memberId, $appTag, $name, $data, $type, $permission, $time);
 		} else {
-			$ret = $fs->updateText($fileUser->id, $appTag, $name, $data, $type, $permission, $time);
+			$ret = $fs->updateText($fileUser->id, $memberId, $appTag, $name, $data, $type, $permission, $time);
 		}
 
 		if($ret === false) {
@@ -166,6 +179,45 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 		}
 
 		return new JsonAPI();
+	}
+
+	/**
+	 * Get the user for the file request.
+	 *
+	 * This can be altered using the post options memberId or userId to get
+	 * files for any user. Those are admin capabilities.
+	 *
+	 * @param Site $site The site object
+	 * @param User $user The requesting user
+	 * @param array $post $_POST
+	 * @return User
+	 * @throws APIException
+	 */
+	private function getFileUser(Site $site, User $user, array $post) {
+
+		if(isset($post['memberId'])) {
+			$this->atLeast($user, User::ADMIN);
+
+			$members = new \CL\Course\Members($site->db);
+			$fileUser = $members->getAsUser($post['memberId']);
+			if($fileUser === null) {
+				throw new APIException('Member does not exist');
+			}
+		}
+		else if(isset($post['userId'])) {
+			$this->atLeast($user, User::ADMIN);
+
+			$users = new Users($site->db);
+			$fileUser = $users->get($post['userId']);
+			if($fileUser === null) {
+				throw new APIException('User does not exist');
+			}
+		} else {
+			$this->atLeast($user, User::USER);
+			$fileUser = $user;
+		}
+
+		return $fileUser;
 	}
 
 
@@ -187,25 +239,15 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 	private function load(Site $site, User $user, Server $server, array $params, $time) {
 		$post = $server->post;
 
-		if(isset($post['userId'])) {
-			$this->atLeast($user, User::STAFF);
-
-			$users = new Users($site->db);
-			$fileUser = $users->get($post['userId']);
-			if($fileUser === null) {
-				throw new APIException('User does not exist');
-			}
-		} else {
-			$this->atLeast($user, User::USER);
-			$fileUser = $user;
-		}
+		$fileUser = $this->getFileUser($site, $user, $post);
+		$memberId = $fileUser->member !== null ? $fileUser->member->id : 0;
 
 		$this->ensure($post, ['appTag', 'name']);
 		$appTag = Resource::sanitize($post['appTag']);
 		$name = Resource::sanitize($post['name']);
 
 		$fs = new FileSystem($site->db);
-		$ret = $fs->readText($fileUser->id, $appTag, $name);
+		$ret = $fs->readText($fileUser->id, $memberId, $appTag, $name);
 		if($ret === null) {
 			throw new APIException("Unable to read file from the file system");
 		}
@@ -272,8 +314,10 @@ class ApiFileSystem extends \CL\Users\Api\Resource {
 			}
 		}
 
+		$memberId = $user->member !== null ? $user->member->id : 0;
+
 		$fs = new FileSystem($site->db);
-		$fs->writeFile($user->id, $appTag, $name, $path,
+		$fs->writeFile($user->id, $memberId, $appTag, $name, $path,
 			$type, FileSystem::PERMISSION_PRIVATE, $time);
 
 		$json = new JsonAPI();

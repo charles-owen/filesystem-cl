@@ -10,7 +10,7 @@ export let FileSystemConsole = function(site) {
 
     Console.tables.add({
         title: 'FileSystem',
-        order: 5,
+        order: 30,
         api: '/api/filesystem/tables'
     });
 

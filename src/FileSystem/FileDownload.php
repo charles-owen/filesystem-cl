@@ -18,13 +18,13 @@ class FileDownload extends View {
 	 * FileDownload constructor.
 	 * @param Site $site The Site object
 	 * @param Server $server The Server object
-	 * @param array $vars Parameters passed to route ('id')
+	 * @param array $params Parameters passed to route ('id')
 	 */
-	public function __construct(Site $site, Server $server, $vars) {
+	public function __construct(Site $site, Server $server, $params) {
 		parent::__construct($site);
 
 		$this->server = $server;
-		$this->id = $vars['id'];
+		$this->id = $params['id'];
 	}
 
 	/**
@@ -36,6 +36,20 @@ class FileDownload extends View {
 		$file = $fs->readTextId($this->id);
 		if($file === null) {
 			return "No such file";
+		}
+
+		// Verify permissions
+		$user = $this->site->users->user;
+		if(!$user->staff) {
+			if($user->id !== $file['userId']) {
+				return 'Not authorized';
+			}
+
+			if($file['memberId'] !== 0) {
+				if($user->member === null || $user->member->id !== $file['memberId']) {
+					return 'Not authorized';
+				}
+			}
 		}
 
 		$server = $this->server;

@@ -9,9 +9,13 @@ namespace CL\FileSystem;
 use CL\Users\User;
 use CL\Users\Users;
 use CL\Tables\TableWhere;
+use CL\Tables\TableException;
 
 /**
- * Class for the File System tables
+ * Class for the File System tables.
+ *
+ * File system tables can be accessed by either the user ID or the member ID.
+ * If the course system is not installed, memberId will be set to zero.
  */
 class FileSystem extends \CL\Tables\Table {
 	/// File permission is public
@@ -38,8 +42,9 @@ class FileSystem extends \CL\Tables\Table {
 CREATE TABLE IF NOT EXISTS `$this->tablename` (
   id         int(11) NOT NULL AUTO_INCREMENT, 
   userid     int(11) NOT NULL, 
-  name       varchar(255) NOT NULL, 
+  memberid   int(11) NOT NULL, 
   apptag     varchar(30) NOT NULL comment 'The application tag is a tag that indicates a using application such as cirsim or other other specific use.', 
+  name       varchar(255) NOT NULL, 
   data       longblob, 
   type       varchar(50), 
   created    datetime NOT NULL, 
@@ -48,8 +53,10 @@ CREATE TABLE IF NOT EXISTS `$this->tablename` (
   permission char(1) NOT NULL, 
   PRIMARY KEY (id), 
   CONSTRAINT unique_name 
-    UNIQUE (name, apptag, userid), 
-  INDEX (userid));
+    UNIQUE (name, apptag, userid, memberid), 
+  INDEX (userid), 
+  INDEX (memberid));
+
 SQL;
 
 
@@ -57,21 +64,22 @@ SQL;
 	}
 
 	/**
-	 * @param int $userId Internal id for user to search
+	 * @param int $userId User internal id
+	 * @param int $memberId Membership internal id or 0 if no membership
 	 * @param string $appTag Tag An application tag for this file
 	 * @param string $name File name within the application scope
 	 * @return true if successfully deleted
 	 */
-	public function delete($userId, $appTag, $name) {
+	public function delete($userId, $memberId, $appTag, $name) {
 		$sql = <<<SQL
 delete from $this->tablename
-where userid=? and apptag=? and name=?
+where userid=? and memberid=? and apptag=? and name=?
 SQL;
 		//echo "\n";
 		//echo $this->sub_sql($sql, $params);
 
 		$stmt = $this->pdo->prepare($sql);
-		$stmt->execute([$userId, $appTag, $name]);
+		$stmt->execute([$userId, $memberId, $appTag, $name]);
 		return $stmt->rowCount() > 0;
 	}
 
@@ -85,7 +93,7 @@ SQL;
 	public function query(array $params) {
         // Utility class that makes it easy to build
         // complex combinations of arbitrary parameters
-		$where = new \CL\Tables\TableWhere($this);
+		$where = new TableWhere($this);
 
 		if(isset($params['id'])) {
 			$where->append('filesystem.id=?', $params['id'], \PDO::PARAM_INT);
@@ -93,6 +101,10 @@ SQL;
 
 		if(isset($params['userId'])) {
 			$where->append('user.id=?', $params['userId']);
+		}
+
+		if(isset($params['memberId'])) {
+			$where->append('memberid=?', $params['memberId']);
 		}
 
 		if(isset($params['appTag'])) {
@@ -123,24 +135,30 @@ SQL;
 		}
 
 		//echo $where->sub_sql($sql);
-		$result = $where->execute($sql);
+		try {
+			$result = $where->execute($sql);
+		} catch (TableException $exception) {
+			return null;
+		}
+
 		$ret = [];
 		foreach($result->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $created = strtotime($row['created']);
-            $modified = strtotime($row['modified']);
+			$created = strtotime($row['created']);
+			$modified = strtotime($row['modified']);
 
-            $ret[] = ['id' => $row['id'],
-                'username' => $row['username'],
-                'userId' => $row['userid'],
-                'user' => $row['user'],
-                'appTag' => $row['apptag'],
-                'name' => $row['name'],
-                'type' => $row['type'],
-                'created' => $created,
-                'modified' => $modified,
-                'createdStr' => date("n-d-Y h:i:sa", $created),
-                'modifiedStr' => date("n-d-Y h:i:sa", $modified),
-	            'permission' => $row['permission']];
+			$ret[] = ['id' => +$row['id'],
+				'username' => $row['username'],
+				'userId' => +$row['userid'],
+				'memberId' => +$row['memberid'],
+				'user' => $row['user'],
+				'appTag' => $row['apptag'],
+				'name' => $row['name'],
+				'type' => $row['type'],
+				'created' => $created,
+				'modified' => $modified,
+				'createdStr' => date("n-d-Y h:i:sa", $created),
+				'modifiedStr' => date("n-d-Y h:i:sa", $modified),
+				'permission' => $row['permission']];
 		}
 
 		return $ret;
@@ -149,7 +167,7 @@ SQL;
 
     /**
      * Get all indicated application tags
-     * @return Array of tags
+     * @return array of tags
      */
     public function queryAppTags() {
 	    $sql = <<<SQL
@@ -180,24 +198,26 @@ SQL;
 	/**
 	 * Test if a file exists
 	 *
-	 * A null users saves as userid=0.
-	 * @param int $userId
-	 * @param $appTag
-	 * @param $name
+	 * A null users saves as userid=0 and memberid=0
+	 *
+	 * @param int $userId User internal id
+	 * @param int $memberId Member internal id or 0 if none
+	 * @param string $appTag Application or assignment tag
+	 * @param string $name Filename
 	 * @return bool true if file exists
 	 */
-	public function fileExists($userId, $appTag, $name) {
+	public function fileExists($userId, $memberId, $appTag, $name) {
 		$pdo = $this->pdo;
 		$sql = <<<SQL
 select created, modified from $this->tablename
-where userid=? and apptag=? and name=?
+where userid=? and memberid=? and apptag=? and name=?
 SQL;
 
 		$created = null;
 		$modified = null;
 
 		$stmt = $pdo->prepare($sql);
-		$stmt->execute(array($userId, $appTag, $name));
+		$stmt->execute(array($userId, $memberId, $appTag, $name));
 
 		$stmt->bindColumn(1, $created, \PDO::PARAM_STR);
 		$stmt->bindColumn(2, $modified, \PDO::PARAM_STR);
@@ -210,35 +230,37 @@ SQL;
 
 	/**
 	 * Write text to a file.
-	 * @param int $userId
-	 * @param string $appTag
-	 * @param string $name
+	 * @param int $userId User internal id
+	 * @param int $memberId Member internal id or 0 if none
+	 * @param string $appTag Application or assignment tag
+	 * @param string $name Filename
 	 * @param string $data
 	 * @param string $type
 	 * @param string $permission File permission
 	 * @param int $time
 	 * @return int ID for the new entry or false if fail
 	 */
-	public function writeText($userId, $appTag,
+	public function writeText($userId, $memberId, $appTag,
 							   $name, $data, $type, $permission, $time) {
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
-insert into $this->tablename(userid, apptag, name, data, type, created, modified, permission)
-values(?, ?, ?, ?, ?, ?, ?, ?)
+insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission)
+values(?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
 		$dateStr = $this->timeStr($time);
 
 		$stmt = $pdo->prepare($sql);
 		$stmt->bindParam(1, $userId);
-		$stmt->bindParam(2, $appTag);
-		$stmt->bindParam(3, $name);
-		$stmt->bindParam(4, $data);
-		$stmt->bindParam(5, $type);
-		$stmt->bindParam(6, $dateStr);
+		$stmt->bindParam(2, $memberId);
+		$stmt->bindParam(3, $appTag);
+		$stmt->bindParam(4, $name);
+		$stmt->bindParam(5, $data);
+		$stmt->bindParam(6, $type);
 		$stmt->bindParam(7, $dateStr);
-		$stmt->bindParam(8, $permission);
+		$stmt->bindParam(8, $dateStr);
+		$stmt->bindParam(9, $permission);
 
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
@@ -255,22 +277,23 @@ SQL;
 
 	/**
 	 * Update the text in a record.
-	 * @param $userId
-	 * @param $appTag
-	 * @param $name
+	 * @param int $userId User internal id
+	 * @param int $memberId Member internal id or 0 if none
+	 * @param string $appTag Application or assignment tag
+	 * @param string $name Filename
 	 * @param $data
 	 * @param $type
 	 * @param string $permission File permission
 	 * @param $time
 	 * @return bool
 	 */
-	public function updateText($userId, $appTag, $name, $data, $type, $permission, $time) {
+	public function updateText($userId, $memberId, $appTag, $name, $data, $type, $permission, $time) {
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
 update $this->tablename
 set data=?, type=?, modified=?, permission=?
-where userid=? and apptag=? and name=?
+where userid=? and memberid=? and apptag=? and name=?
 SQL;
 
 		$dateStr = $this->timeStr($time);
@@ -283,8 +306,9 @@ SQL;
 		$stmt->bindParam(4, $permission);
 
 		$stmt->bindParam(5, $userId);
-		$stmt->bindParam(6, $appTag);
-		$stmt->bindParam(7, $name);
+		$stmt->bindParam(6, $memberId);
+		$stmt->bindParam(7, $appTag);
+		$stmt->bindParam(8, $name);
 
 		try {
 			if(!$stmt->execute()) {
@@ -299,17 +323,18 @@ SQL;
 
 	/**
 	 * Read text from a file.
-	 * @param int $userId User that owns/created the file
-	 * @param string $appTag Application tag
+	 * @param int $userId User internal id
+	 * @param int $memberId Member internal id or 0 if none
+	 * @param string $appTag Application or assignment tag
 	 * @param string $name Filename
 	 * @return array with keys 'id', 'data', 'type', 'created', 'modified', and 'permission'
 	 */
-	public function readText($userId, $appTag, $name) {
+	public function readText($userId, $memberId, $appTag, $name) {
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
 select id, `data`, type, created, modified, permission from $this->tablename
-where userid=? and apptag=? and name=?
+where userid=? and memberid=? and apptag=? and name=?
 SQL;
 
 		$id = null;
@@ -320,9 +345,9 @@ SQL;
 		$permission = null;
 
 		$stmt = $pdo->prepare($sql);
-		$stmt->execute([$userId, $appTag, $name]);
+		$stmt->execute([$userId, $memberId, $appTag, $name]);
 
-		//echo $this->sub_sql($sql, [$userId, $appTag, $name]);
+		//echo $this->sub_sql($sql, [$userId, $memberId, $appTag, $name]);
 
 		$stmt->bindColumn(1, $id, \PDO::PARAM_INT);
 		$stmt->bindColumn(2, $data, \PDO::PARAM_STR);
@@ -332,7 +357,7 @@ SQL;
 		$stmt->bindColumn(6, $permission, \PDO::PARAM_STR);
 		if($stmt->fetch(\PDO::FETCH_BOUND) !== false) {
 			return [
-				'id' => $id,
+				'id' => +$id,
 				'data' => $data,
 				'type' => $type,
 				'created' => strtotime($created),
@@ -347,19 +372,20 @@ SQL;
 	/**
 	 * Read text from a file.
 	 * @param int $id ID for the file
-	 * @return array with keys 'id', 'data', 'type', 'created', 'modified', and 'permission'
+	 * @return array with keys 'id', 'userId', 'memberId', 'data', 'type', 'created', 'modified', and 'permission'
 	 */
 	public function readTextId($id) {
 		$pdo = $this->pdo;
 		$where = new \CL\Tables\TableWhere($this);
 
 		$sql = <<<SQL
-select userid, `name`, apptag, `data`, `type`, created, modified, permission
+select userid, memberid, `name`, apptag, `data`, `type`, created, modified, permission
 from $this->tablename
 where id=?
 SQL;
 
 		$userId = null;
+		$memberId = null;
 		$name = null;
 		$appTag = null;
 		$data = null;
@@ -375,17 +401,19 @@ SQL;
 
 
 		$stmt->bindColumn(1, $userId, \PDO::PARAM_INT);
-		$stmt->bindColumn(2, $name, \PDO::PARAM_STR);
-		$stmt->bindColumn(3, $appTag, \PDO::PARAM_STR);
-		$stmt->bindColumn(4, $data, \PDO::PARAM_STR);
-		$stmt->bindColumn(5, $type, \PDO::PARAM_STR);
-		$stmt->bindColumn(6, $created, \PDO::PARAM_STR);
-		$stmt->bindColumn(7, $modified, \PDO::PARAM_STR);
-		$stmt->bindColumn(8, $permission, \PDO::PARAM_STR);
+		$stmt->bindColumn(2, $memberId, \PDO::PARAM_INT);
+		$stmt->bindColumn(3, $name, \PDO::PARAM_STR);
+		$stmt->bindColumn(4, $appTag, \PDO::PARAM_STR);
+		$stmt->bindColumn(5, $data, \PDO::PARAM_STR);
+		$stmt->bindColumn(6, $type, \PDO::PARAM_STR);
+		$stmt->bindColumn(7, $created, \PDO::PARAM_STR);
+		$stmt->bindColumn(8, $modified, \PDO::PARAM_STR);
+		$stmt->bindColumn(9, $permission, \PDO::PARAM_STR);
 		if($stmt->fetch(\PDO::FETCH_BOUND) !== false) {
 			return [
-				'id'=>$id,
-				'userId'=>$userId,
+				'id'=>+$id,
+				'userId'=>+$userId,
+				'memberId'=>+$memberId,
 				'name'=>$name,
 				'appTag'=>$appTag,
 				'data' => $data,
@@ -401,22 +429,23 @@ SQL;
 
 	/**
 	 * Write data to a file based on a file pointer.
-	 * @param int $userId
-	 * @param string $appTag
-	 * @param string $name
-	 * @param handle $file
+	 * @param int $userId User internal id
+	 * @param int $memberId Member internal id or 0 if none
+	 * @param string $appTag Application or assignment tag
+	 * @param string $name Filename
+	 * @param mixed $file
 	 * @param string $type
 	 * @param string $permission File permission to set
 	 * @param int $time
 	 * @return int ID for the new entry or false if fail
 	 */
-	public function writeFile($userId, $appTag,
+	public function writeFile($userId, $memberId, $appTag,
 	                          $name, $file, $type, $permission, $time) {
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
-insert into $this->tablename(userid, apptag, name, data, type, created, modified, permission)
-values(?, ?, ?, ?, ?, ?, ?, ?)
+insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission)
+values(?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
 		$fp = fopen($file, 'rb');
@@ -428,13 +457,14 @@ SQL;
 
 		$stmt = $pdo->prepare($sql);
 		$stmt->bindParam(1, $userId);
-		$stmt->bindParam(2, $appTag);
-		$stmt->bindParam(3, $name);
-		$stmt->bindParam(4, $fp, \PDO::PARAM_LOB);
-		$stmt->bindParam(5, $type);
-		$stmt->bindParam(6, $dateStr);
+		$stmt->bindParam(2, $memberId);
+		$stmt->bindParam(3, $appTag);
+		$stmt->bindParam(4, $name);
+		$stmt->bindParam(5, $fp, \PDO::PARAM_LOB);
+		$stmt->bindParam(6, $type);
 		$stmt->bindParam(7, $dateStr);
-		$stmt->bindParam(8, $permission);
+		$stmt->bindParam(8, $dateStr);
+		$stmt->bindParam(9, $permission);
 
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
@@ -452,19 +482,20 @@ SQL;
 	/**
 	 * Read a file based on an ID
 	 * @param int $id ID for the file
-	 * @return array with keys 'id', 'binary', 'type', 'created', 'modified', and 'permission'
+	 * @return array with keys 'id', 'userId', 'memberId', 'binary', 'type', 'created', 'modified', and 'permission'
 	 */
 	public function readFileId($id) {
 		$pdo = $this->pdo;
 		$where = new \CL\Tables\TableWhere($this);
 
 		$sql = <<<SQL
-select `data`, userid, `name`, apptag, `type`, created, modified, permission
+select `data`, userid, memberid, `name`, apptag, `type`, created, modified, permission
 from $this->tablename
 where id=?
 SQL;
 
 		$userId = null;
+		$memberId = null;
 		$name = null;
 		$appTag = null;
 		$data = null;
@@ -478,18 +509,20 @@ SQL;
 		$stmt = $pdo->prepare($sql);
 		$stmt->execute([$id]);
 
-
 		$stmt->bindColumn(1, $data, \PDO::PARAM_LOB);
 		$stmt->bindColumn(2, $userId, \PDO::PARAM_INT);
-		$stmt->bindColumn(3, $name, \PDO::PARAM_STR);
-		$stmt->bindColumn(4, $appTag, \PDO::PARAM_STR);
-		$stmt->bindColumn(5, $type, \PDO::PARAM_STR);
-		$stmt->bindColumn(6, $created, \PDO::PARAM_STR);
-		$stmt->bindColumn(7, $modified, \PDO::PARAM_STR);
-		$stmt->bindColumn(8, $permission, \PDO::PARAM_STR);
+		$stmt->bindColumn(3, $memberId, \PDO::PARAM_INT);
+		$stmt->bindColumn(4, $name, \PDO::PARAM_STR);
+		$stmt->bindColumn(5, $appTag, \PDO::PARAM_STR);
+		$stmt->bindColumn(6, $type, \PDO::PARAM_STR);
+		$stmt->bindColumn(7, $created, \PDO::PARAM_STR);
+		$stmt->bindColumn(8, $modified, \PDO::PARAM_STR);
+		$stmt->bindColumn(9, $permission, \PDO::PARAM_STR);
 		if($stmt->fetch(\PDO::FETCH_BOUND) !== false) {
 			return [
-				'userId'=>$userId,
+				'id' => +$id,
+				'userId'=>+$userId,
+				'memberId'=>+$memberId,
 				'name'=>$name,
 				'appTag'=>$appTag,
 				'binary' => $data,
@@ -522,7 +555,7 @@ SQL;
 
 		$stmt = $this->pdo->prepare($sql);
 		if($stmt->execute([]) === false) {
-			return "Error accessing autologin table\n";
+			return "Error accessing file system table\n";
 		}
 
 		$cnt = $stmt->rowCount();

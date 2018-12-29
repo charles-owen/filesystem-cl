@@ -43,7 +43,7 @@ class FileSystemPlugin extends \CL\Site\Plugin {
 			});
 
 			$router->addRoute(['filesystem', 'view', ':id'], function(Site $site, Server $server, array $params, array $properties, $time) {
-				$view = new FileView($site, $properties);
+				$view = new FileView($site, $server, $properties);
 				return $view->whole();
 			});
 

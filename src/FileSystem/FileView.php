@@ -8,6 +8,7 @@ namespace CL\FileSystem;
 
 use CL\Site\Site;
 use CL\Site\View;
+use CL\Site\System\Server;
 
 /**
  * View class for viewing the content of files.
@@ -18,7 +19,7 @@ class FileView extends View {
 	 * @param Site $site The Site configuration
 	 * @param array $properties Properties passed from the router.
 	 */
-	public function __construct(Site $site, $properties) {
+	public function __construct(Site $site, Server $server, $properties) {
 		parent::__construct($site);
 
 		// Paths to the view are of the form:
@@ -34,6 +35,29 @@ class FileView extends View {
 			$this->title = "File: $name";
 		} else {
 			$this->title = "File: File does not exist";
+			return;
+		}
+
+		// Verify permissions
+		$user = $this->site->users->user;
+		if(!$user->staff) {
+			if($user->id !== $this->file['userId']) {
+				$this->title = "File: Not authorized";
+				$this->file = null;
+
+				$server->redirect($site->root . '/cl/notauthorized');
+				return;
+			}
+
+			if($this->file['memberId'] !== 0) {
+				if($user->member === null || $user->member->id !== $this->file['memberId']) {
+					$this->title = "File: Not authorized";
+					$this->file = null;
+
+					$server->redirect($site->root . '/cl/notauthorized');
+					return;
+				}
+			}
 		}
 	}
 
@@ -42,6 +66,10 @@ class FileView extends View {
 	 * @return string HTML
 	 */
 	public function present() {
+		if($this->file === null) {
+			return '<p>File does not exist.</p>';
+		}
+
 		$user = $this->file['user'];
 		$userName = $this->file['username'];
 		$appTag = $this->file['appTag'];

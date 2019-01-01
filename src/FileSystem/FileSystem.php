@@ -198,7 +198,7 @@ SQL;
 	/**
 	 * Test if a file exists
 	 *
-	 * A null users saves as userid=0 and memberid=0
+	 * A null user saves as userid=0 and memberid=0
 	 *
 	 * @param int $userId User internal id
 	 * @param int $memberId Member internal id or 0 if none
@@ -318,7 +318,7 @@ SQL;
 			return false;
 		}
 
-		return $stmt->rowCount() > 0;
+		return true;
 	}
 
 	/**

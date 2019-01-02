@@ -20,8 +20,8 @@
           <tr v-for="result in results">
             <td>{{result.user}}</td>
             <td>{{result.username}}</td>
-            <td><a :href="toView + '/' + result.id" target="_file">{{result.name}}</a>
-            <a :href="toDownload + '/' + result.id"><img :src="toDownloadImg"></a></td>
+            <td><a :href="root + '/cl/filesystem/view/' + result.id" target="_file">{{result.name}}</a>
+            <a :href="root + '/cl/filesystem/download/' + result.id"><img :src="root + '/vendor/cl/site/img/download.png'"></a></td>
             <td>{{result.createdStr}}</td>
             <td>{{result.modifiedStr}}</td>
           </tr>
@@ -40,92 +40,90 @@
 </template>
 
 <script>
-  import UserSelectorVue from 'users-cl/js/Lib/UserSelectorVue.vue';
+	const UserSelectorVue = Site.UserSelectorVue;
+	const ConsoleComponentBase = Site.ConsoleComponentBase;
 
-    export default {
-        data: function() {
-            return {
-                selectedApp: 'any',
-                user: null,
-                applications: [],
+  /**
+   * Console component used to view the contents of the file system by user.
+   * @constructor FileSystemComponentVue
+   */
+	export default {
+		extends: ConsoleComponentBase,
+		data: function () {
+			return {
+				selectedApp: 'any',
+				fileUser: null,
+				applications: [],
 
-                fetched: false,
-                results: [],
+				fetched: false,
+				results: [],
+			}
+		},
 
-                toView: Site.root + '/cl/filesystem/view',
-                toDownload: Site.root + '/cl/filesystem/download',
-                toDownloadImg: Site.root + '/vendor/cl/site/img/download.png'
+		mounted() {
+			this.$parent.setTitle(': File System');
 
-            }
-        },
+			this.$site.api.get('/api/filesystem/applications', {})
+				.then((response) => {
+					if (!response.hasError()) {
+						let data = response.getData('applications');
+						if (data !== null) {
+							this.applications = data.attributes;
+						}
 
-        mounted() {
-            this.$parent.setTitle(': File System');
+					} else {
+						this.$site.toast(this, response);
+					}
 
-            Site.api.get('/api/filesystem/applications', {})
-                .then((response) => {
-                    if(!response.hasError()) {
-                        let data = response.getData('applications');
-                        if(data !== null) {
-                            this.applications = data.attributes;
-                        }
+				})
+				.catch((error) => {
+					console.log(error);
+					this.$site.toast(this, error);
+				});
 
-                    } else {
-                        Site.toast(this, response);
-                    }
+		},
+		components: {
+			'user-selector': UserSelectorVue
+		},
+		methods: {
+			selected(user) {
+				this.fileUser = user;
+			},
+			query() {
+				if (this.fileUser === null) {
+					return;
+				}
 
-                })
-                .catch((error) => {
-                    console.log(error);
-                    Site.toast(this, error);
-                });
+				this.fetched = false;
 
-        },
-        components: {
-            'user-selector': UserSelectorVue
-        },
-        methods: {
-            selected(user) {
-                this.user = user;
-            },
-            open(file) {
-                console.log(file);
-            },
-            query() {
-                if(this.user === null) {
-                    return;
-                }
+				let params = {
+					  'userId': this.fileUser.id
+				};
 
-                this.fetched = false;
+				if (this.selectedApp !== 'any') {
+					params.appTag = this.selectedApp;
+				}
 
-                let params = {
-                      'userId': this.user.id
-                };
+				this.$site.api.get('/api/filesystem', params)
+					.then((response) => {
+						if (!response.hasError()) {
+							this.fetched = true;
+							let data = response.getData('files');
+							if (data !== null) {
+								this.results = data.attributes;
+							}
+						} else {
+							this.$site.toast(this, response);
+						}
 
-                if(this.application !== 'any') {
-                    params.appTag = this.application;
-                }
-
-                Site.api.get('/api/filesystem', params)
-                    .then((response) => {
-                        if(!response.hasError()) {
-                            this.fetched = true;
-                            let data = response.getData('files');
-                            if(data !== null) {
-                                this.results = data.attributes;
-                            }
-                        } else {
-                            Site.toast(this, response);
-                        }
-
-                    })
-                    .catch((error) => {
-                        console.log(error);
-                        Site.toast(this, error);
-                    });
-            }
-        }
-    }
+					})
+					.catch((error) => {
+						console.log(error);
+						this.$site.toast(this, error);
+					});
+			}
+		}
+	}
 </script>
 
 // Notice: Not scoped!

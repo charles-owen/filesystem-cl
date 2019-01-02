@@ -119,7 +119,7 @@ SQL;
         $usersTable = $users->tablename;
 
         $sql = <<<SQL
-select filesystem.id as id, user.id as userid, user.name as username, user.user as user,
+select filesystem.id as id, filesystem.memberid as memberid, user.id as userid, user.name as username, user.user as user,
 	filesystem.apptag as apptag, filesystem.name as name, filesystem.type as type, 
 	filesystem.created as created, filesystem.modified as modified, filesystem.permission as permission
 from $this->tablename filesystem

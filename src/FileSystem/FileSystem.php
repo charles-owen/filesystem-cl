@@ -134,7 +134,7 @@ SQL;
 			$where->append(null, intval($params['limit']), \PDO::PARAM_INT);
 		}
 
-		//echo $where->sub_sql($sql);
+		// echo $where->sub_sql($sql);
 		try {
 			$result = $where->execute($sql);
 		} catch (TableException $exception) {

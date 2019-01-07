@@ -78,6 +78,10 @@ class ApiFileSystem extends Resource {
 	private function query(Site $site, User $user, Server $server) {
 		$this->atLeast($user, User::STAFF);
 
+		if($server->requestMethod !== 'GET') {
+			throw new APIException('Invalid API usage', APIException::INVALID_API_USAGE);
+		}
+
 		$params = [];
 		$get = $server->get;
 
@@ -134,6 +138,10 @@ class ApiFileSystem extends Resource {
 	 * @throws APIException If unable to write file
 	 */
 	private function save(Site $site, User $user, Server $server, array $params, $time) {
+		if($server->requestMethod !== 'POST') {
+			throw new APIException('Invalid API usage', APIException::INVALID_API_USAGE);
+		}
+
 		$post = $server->post;
 
 		$fileUser = $this->getFileUser($site, $user, $post);
@@ -237,14 +245,18 @@ class ApiFileSystem extends Resource {
 	 * @throws APIException If unable to write file
 	 */
 	private function load(Site $site, User $user, Server $server, array $params, $time) {
-		$post = $server->post;
+		if($server->requestMethod !== 'GET') {
+			throw new APIException('Invalid API usage', APIException::INVALID_API_USAGE);
+		}
 
-		$fileUser = $this->getFileUser($site, $user, $post);
+		$get = $server->get;
+
+		$fileUser = $this->getFileUser($site, $user, $get);
 		$memberId = $fileUser->member !== null ? $fileUser->member->id : 0;
 
-		$this->ensure($post, ['appTag', 'name']);
-		$appTag = Resource::sanitize($post['appTag']);
-		$name = Resource::sanitize($post['name']);
+		$this->ensure($get, ['appTag', 'name']);
+		$appTag = Resource::sanitize($get['appTag']);
+		$name = Resource::sanitize($get['name']);
 
 		$fs = new FileSystem($site->db);
 		$ret = $fs->readText($fileUser->id, $memberId, $appTag, $name);

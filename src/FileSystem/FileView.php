@@ -17,6 +17,7 @@ class FileView extends View {
 	/**
 	 * FileView constructor.
 	 * @param Site $site The Site configuration
+	 * @param Server $server The Server
 	 * @param array $properties Properties passed from the router.
 	 */
 	public function __construct(Site $site, Server $server, $properties) {

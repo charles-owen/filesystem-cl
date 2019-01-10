@@ -15,7 +15,7 @@
     }
   },
   "require": {
-    "cl/site": "^2.0",
+    "cl/site": "^2.1",
     "cl/users": "^2.0",
     "cl/console": "^2.0"
   },

@@ -16,8 +16,8 @@
   },
   "require": {
     "cl/site": "^2.1",
-    "cl/users": "^2.0",
-    "cl/console": "^2.0"
+    "cl/users": "^2.1",
+    "cl/console": "^2.1"
   },
   "repositories": [
     {
@@ -27,7 +27,7 @@
   ],
   "extra": {
     "branch-alias": {
-      "dev-master": "2.0.x-dev"
+      "dev-master": "2.1.x-dev"
     }
   }
 }

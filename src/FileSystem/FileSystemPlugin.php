@@ -29,6 +29,16 @@ class FileSystemPlugin extends \CL\Site\Plugin {
 	public function depends() {return ['console', 'users'];}
 
 	/**
+	 * Install the plugin!
+	 * @param Site $site The Site object
+	 */
+	public function install(Site $site) {
+		parent::install($site);
+
+		$site->install("filesystem", $this);
+	}
+
+	/**
 	 * Amend existing object
 	 * The Router is amended with routes for the login page
 	 * and for the user API.

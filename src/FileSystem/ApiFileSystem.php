@@ -143,7 +143,6 @@ class ApiFileSystem extends Resource {
 		}
 
 		$post = $server->post;
-
 		$fileUser = $this->getFileUser($site, $user, $post);
 
 		$this->ensure($post, ['appTag', 'name', 'data']);

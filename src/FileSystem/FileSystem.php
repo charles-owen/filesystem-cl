@@ -310,6 +310,8 @@ SQL;
 		$stmt->bindParam(7, $appTag);
 		$stmt->bindParam(8, $name);
 
+		// echo $this->sub_sql($sql, [$data, $type, $dateStr, $permission, $userId, $memberId, $appTag, $name]);
+
 		try {
 			if(!$stmt->execute()) {
 				return false;

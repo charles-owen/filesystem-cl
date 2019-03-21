@@ -268,6 +268,10 @@ SQL;
 			if(!$stmt->execute()) {
 				return false;
 			}
+
+			if($stmt->rowCount() !== 1) {
+				return false;
+			}
 		} catch(\PDOException $e) {
 			return false;
 		}
@@ -314,6 +318,10 @@ SQL;
 
 		try {
 			if(!$stmt->execute()) {
+				return false;
+			}
+
+			if($stmt->rowCount() !== 1) {
 				return false;
 			}
 		} catch(\PDOException $e) {

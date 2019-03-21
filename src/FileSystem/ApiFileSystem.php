@@ -177,8 +177,15 @@ class ApiFileSystem extends Resource {
 		$fs = new FileSystem($site->db);
 		if(!$fs->fileExists($user->id, $memberId, $appTag, $name)) {
 			$ret = $fs->writeText($fileUser->id, $memberId, $appTag, $name, $data, $type, $permission, $time);
+			if($ret === false) {
+				$site->filesystem->logger->error("FileSystem save failed");
+			}
+
 		} else {
 			$ret = $fs->updateText($fileUser->id, $memberId, $appTag, $name, $data, $type, $permission, $time);
+			if($ret === false) {
+				$site->filesystem->logger->error("FileSystem update failed");
+			}
 		}
 
 		if($ret === false) {

@@ -256,7 +256,7 @@ SQL;
 		$stmt->bindParam(2, $memberId);
 		$stmt->bindParam(3, $appTag);
 		$stmt->bindParam(4, $name);
-		$stmt->bindParam(5, $data);
+		$stmt->bindParam(5, $data, \PDO::PARAM_LOB);
 		$stmt->bindParam(6, $type);
 		$stmt->bindParam(7, $dateStr);
 		$stmt->bindParam(8, $dateStr);
@@ -304,7 +304,7 @@ SQL;
 
 		$stmt = $pdo->prepare($sql);
 
-		$stmt->bindParam(1, $data);
+		$stmt->bindParam(1, $data, \PDO::PARAM_LOB);
 		$stmt->bindParam(2, $type);
 		$stmt->bindParam(3, $dateStr);
 		$stmt->bindParam(4, $permission);
@@ -318,10 +318,6 @@ SQL;
 
 		try {
 			if(!$stmt->execute()) {
-				return false;
-			}
-
-			if($stmt->rowCount() !== 1) {
 				return false;
 			}
 		} catch(\PDOException $e) {
@@ -360,7 +356,7 @@ SQL;
 		//echo $this->sub_sql($sql, [$userId, $memberId, $appTag, $name]);
 
 		$stmt->bindColumn(1, $id, \PDO::PARAM_INT);
-		$stmt->bindColumn(2, $data, \PDO::PARAM_STR);
+		$stmt->bindColumn(2, $data, \PDO::PARAM_LOB);
 		$stmt->bindColumn(3, $type, \PDO::PARAM_STR);
 		$stmt->bindColumn(4, $created, \PDO::PARAM_STR);
 		$stmt->bindColumn(5, $modified, \PDO::PARAM_STR);
@@ -414,7 +410,7 @@ SQL;
 		$stmt->bindColumn(2, $memberId, \PDO::PARAM_INT);
 		$stmt->bindColumn(3, $name, \PDO::PARAM_STR);
 		$stmt->bindColumn(4, $appTag, \PDO::PARAM_STR);
-		$stmt->bindColumn(5, $data, \PDO::PARAM_STR);
+		$stmt->bindColumn(5, $data, \PDO::PARAM_LOB);
 		$stmt->bindColumn(6, $type, \PDO::PARAM_STR);
 		$stmt->bindColumn(7, $created, \PDO::PARAM_STR);
 		$stmt->bindColumn(8, $modified, \PDO::PARAM_STR);

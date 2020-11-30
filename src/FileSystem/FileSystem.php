@@ -130,8 +130,15 @@ order by user.name, filesystem.apptag, filesystem.name
 SQL;
 
 		if(isset($params['limit'])) {
-			$sql .= "\nlimit ?";
-			$where->append(null, intval($params['limit']), \PDO::PARAM_INT);
+		    if(isset($params['offset'])) {
+                $sql .= "\nlimit ?,?";
+                $where->append(null, intval($params['offset']), \PDO::PARAM_INT);
+                $where->append(null, intval($params['limit']), \PDO::PARAM_INT);
+            } else
+            {
+                $sql .= "\nlimit ?";
+                $where->append(null, intval($params['limit']), \PDO::PARAM_INT);
+            }
 		}
 
 		// echo $where->sub_sql($sql);

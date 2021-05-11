@@ -15,7 +15,7 @@ export let FileSystemConsole = function(site) {
     });
 
     Console.components.addOption({
-        atLeast: Users.User.STAFF,
+        atLeast: Site.User.STAFF,
         page: {title: 'Main', route: '', order: 1},
         section: {title: 'Site', order: 1},
         title: 'File System',

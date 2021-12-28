@@ -252,10 +252,11 @@ SQL;
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
-insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission)
-values(?, ?, ?, ?, ?, ?, ?, ?, ?)
+insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission, version)
+values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
+        $version = 0;
 		$dateStr = $this->timeStr($time);
 
 		$stmt = $pdo->prepare($sql);
@@ -268,9 +269,9 @@ SQL;
 		$stmt->bindParam(7, $dateStr);
 		$stmt->bindParam(8, $dateStr);
 		$stmt->bindParam(9, $permission);
+        $stmt->bindParam(10, $version);
 
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
 		try {
 			if(!$stmt->execute()) {
 				return false;
@@ -457,8 +458,8 @@ SQL;
 		$pdo = $this->pdo;
 
 		$sql = <<<SQL
-insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission)
-values(?, ?, ?, ?, ?, ?, ?, ?, ?)
+insert into $this->tablename(userid, memberid, apptag, name, data, type, created, modified, permission, version)
+values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL;
 
 		$fp = fopen($file, 'rb');
@@ -467,6 +468,7 @@ SQL;
 		}
 
 		$dateStr = $this->timeStr($time);
+        $version = 0;
 
 		$stmt = $pdo->prepare($sql);
 		$stmt->bindParam(1, $userId);
@@ -478,6 +480,7 @@ SQL;
 		$stmt->bindParam(7, $dateStr);
 		$stmt->bindParam(8, $dateStr);
 		$stmt->bindParam(9, $permission);
+        $stmt->bindParam(10, $version);
 
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 

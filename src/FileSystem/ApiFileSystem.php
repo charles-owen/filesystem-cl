@@ -163,6 +163,7 @@ class ApiFileSystem extends Resource {
 			$section = $course->get_section_for($user);
 			if($section !== null) {
 				$assignment = $section->get_assignment($appTag);
+                $assignment->load();
 				if($assignment !== null && !$assignment->is_open($user, $time)) {
 					throw new APIException('Assignment is not open for submission');
 				}

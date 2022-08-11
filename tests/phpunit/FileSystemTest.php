@@ -13,21 +13,16 @@ use CL\FileSystem\FileSystem;
 
 class FileSystemTest extends FileSystemDatabaseTestBase
 {
-	/**
-	 * @return PHPUnit_Extensions_Database_DataSet_IDataSet
-	 */
-	public function getDataSet() {
-		return $this->dataSets(['filesystem.xml', 'user-many.xml']);
-	}
-
-	public function ensureTables() {
-		$this->ensureTable(new Users($this->site->db));
-		$this->ensureTable(new FileSystem($this->site->db));
-	}
+    protected function setUp() : void {
+        $this->ensureTable(new Users($this->site->db));
+        $this->ensureTable(new FileSystem($this->site->db));
+    }
 
 
 
 	public function test_read_text() {
+        $this->dataSets(['db/user-many.xml']);
+
 		$fs = new FileSystem($this->site->db);
 
 		$this->assertInstanceOf('\CL\FileSystem\FileSystem', $fs);
@@ -79,6 +74,8 @@ class FileSystemTest extends FileSystemDatabaseTestBase
 	}
 
 	public function test_query() {
+        $this->dataSets(['db/user-many.xml']);
+
 		$fs = new FileSystem($this->site->db);
 
         $users = new Users($this->site->db);
@@ -105,7 +102,9 @@ class FileSystemTest extends FileSystemDatabaseTestBase
     }
 
     public function test_queryAppTags() {
-	    $fs = new FileSystem($this->site->db);
+        $this->dataSets(['db/user-many.xml']);
+
+        $fs = new FileSystem($this->site->db);
 
 	    $users = new Users($this->site->db);
 	    $user3 = $users->get(3);
@@ -124,6 +123,7 @@ class FileSystemTest extends FileSystemDatabaseTestBase
 
 
 	public function test_delete() {
+        $this->dataSets(['db/user-many.xml']);
 		$fs = new FileSystem($this->site->db);
 
 		$users = new Users($this->site->db);
@@ -150,6 +150,7 @@ class FileSystemTest extends FileSystemDatabaseTestBase
 
 
 	public function test_writeFile() {
+        $this->dataSets(['db/user-many.xml']);
 		$fs = new FileSystem($this->site->db);
 
 		$users = new Users($this->site->db);

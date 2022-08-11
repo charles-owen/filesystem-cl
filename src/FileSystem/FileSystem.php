@@ -370,9 +370,12 @@ SQL;
 		$stmt->bindColumn(5, $modified, \PDO::PARAM_STR);
 		$stmt->bindColumn(6, $permission, \PDO::PARAM_STR);
 		if($stmt->fetch(\PDO::FETCH_BOUND) !== false) {
+            $actual = fread($data, 100000000);
+            fclose($data);
+
 			return [
 				'id' => +$id,
-				'data' => $data,
+				'data' => $actual,
 				'type' => $type,
 				'created' => strtotime($created),
 				'modified' => strtotime($modified),
@@ -424,13 +427,16 @@ SQL;
 		$stmt->bindColumn(8, $modified, \PDO::PARAM_STR);
 		$stmt->bindColumn(9, $permission, \PDO::PARAM_STR);
 		if($stmt->fetch(\PDO::FETCH_BOUND) !== false) {
+            $actual = fread($data, 100000000);
+            fclose($data);
+
 			return [
 				'id'=>+$id,
 				'userId'=>+$userId,
 				'memberId'=>+$memberId,
 				'name'=>$name,
 				'appTag'=>$appTag,
-				'data' => $data,
+				'data' => $actual,
 				'type' => $type,
 				'created' => strtotime($created),
 				'modified' => strtotime($modified),

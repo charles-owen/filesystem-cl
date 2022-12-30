@@ -61,7 +61,7 @@
 		},
 
 		mounted() {
-			this.$parent.setTitle(': File System');
+			this.$root.setTitle(': File System');
 
 			this.$site.api.get('/api/filesystem/applications', {})
 				.then((response) => {

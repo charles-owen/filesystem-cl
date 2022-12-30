@@ -2,6 +2,9 @@ const path = require('path');
 
 module.exports = {
 	entry: {
-		FileSystemConsole: path.resolve(__dirname, 'js/Console/index.js')
+		FileSystemConsole: {
+			import: path.resolve(__dirname, 'js/Console/index.js'),
+			dependOn: ['Console', 'Users', 'Site']
+		}
 	}
 }
